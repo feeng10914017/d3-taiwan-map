@@ -2,3 +2,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+svg path.county {
+  fill: #ccc;
+  stroke: #fff;
+  stroke-width: 0.5;
+}
+
+svg path.county:hover {
+  fill: #ff7f50;
+}
+
+svg path.township {
+  fill: #ddd;
+  stroke: #fff;
+  stroke-width: 0.2;
+}
+
+svg path.township:hover {
+  fill: #ff7f50;
+}

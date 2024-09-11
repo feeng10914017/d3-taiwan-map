@@ -7,13 +7,13 @@ import { TaiwanMapComponent } from './components/taiwan-map/taiwan-map.component
   standalone: true,
   imports: [RouterOutlet, TaiwanMapComponent],
   template: `
-    <h1 class="sticky top-0 p-5 text-4xl shadow-lg">Welcome to {{ title }}!</h1>
-    <app-taiwan-map class="h-full grow bg-sky-200" />
+    <h1 class="sticky top-0 bg-gray-50/[0.25] p-5 text-4xl shadow-lg">{{ title }}</h1>
+    <app-taiwan-map class="h-full grow" />
 
     <router-outlet />
   `,
   styles: [],
-  host: { class: 'flex flex-col min-h-dvh' },
+  host: { class: 'flex flex-col min-h-dvh bg-sky-200' },
 })
 export class AppComponent {
   title = 'D3TaiwanMap';
