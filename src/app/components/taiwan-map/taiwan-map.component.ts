@@ -2,7 +2,7 @@ import { isPlatformBrowser, NgIf } from '@angular/common';
 import { Component, ElementRef, inject, OnDestroy, OnInit, PLATFORM_ID, ViewChild } from '@angular/core';
 import * as d3 from 'd3';
 import { Feature, FeatureCollection, Geometry } from 'geojson';
-import { forkJoin, fromEvent, map, Subject, takeUntil, throttleTime } from 'rxjs';
+import { forkJoin, fromEvent, map, Subject, takeUntil, tap, throttleTime } from 'rxjs';
 import * as topojson from 'topojson';
 import { AssetsFileName } from '../../core/enums/assets-file-name.enum';
 import { D3ClassName } from '../../core/enums/d3-class.enum';
@@ -20,7 +20,7 @@ type GeoFeature = Feature<Geometry, LocationInfo>;
     <svg #mapSvg></svg>
     <button
       *ngIf="currentZoom !== 1"
-      class="absolute right-0 top-0 m-2 rounded px-4 py-2 shadow hover:shadow-lg"
+      class="absolute right-0 top-[80px] m-3 rounded px-4 py-2 shadow hover:shadow-lg"
       (click)="zoomToAllCounty()">
       Back
     </button>
@@ -35,6 +35,7 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
   private readonly _isBrowser = isPlatformBrowser(this._platformId);
   private readonly _elementRef = inject(ElementRef);
   private readonly _apiService = inject(ApiService);
+  private readonly _headerHeight = 80;
 
   private _width = 800;
   private _height = 600;
@@ -55,11 +56,12 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
     this._fetchData();
 
     fromEvent(window, 'resize')
-      .pipe(takeUntil(this._destroy), throttleTime(50))
-      .subscribe(() => {
-        this._updateContainerDimensions();
-        this._updateMapSize();
-      });
+      .pipe(
+        takeUntil(this._destroy),
+        tap(() => this._updateContainerDimensions()),
+        throttleTime(50),
+      )
+      .subscribe(() => this._updateMapSize());
   }
 
   ngOnDestroy(): void {
@@ -82,7 +84,7 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
       .geoMercator()
       .center([121, 23.5])
       .scale(8000)
-      .translate([this._width / 2, this._height / 2]);
+      .translate([this._width / 2, this._height / 2 + this._headerHeight]);
 
     this._path = d3.geoPath().projection(this._projection);
   }
@@ -98,7 +100,8 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
    * 取得地圖資料
    *
    * @reference 縣市數據 https://data.gov.tw/dataset/7442
-   * @reference 鄉鎮數據 https://data.gov.tw/dataset/130549
+   * @reference 鄉鎮市區數據 https://data.gov.tw/dataset/7441
+   * @reference 村里數據 https://data.gov.tw/dataset/130549
    * @reference 格式轉換 https://mapshaper.org/
    */
   private _fetchData(): void {
@@ -107,7 +110,6 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
     forkJoin([this._apiService.getCountyData(), this._apiService.getTownshipData()])
       .pipe(map((arr) => arr.map((data) => data as TopoJSON.Topology)))
       .subscribe(([countyData, townshipData]) => {
-        console.log(countyData, townshipData);
         const countyGeometries = topojson.feature(countyData, countyData.objects[countyFileName]) as Geometries;
         const townshipGeometries = topojson.feature(townshipData, townshipData.objects[townshipFileName]) as Geometries;
         countyGeometries.features.forEach((item) => (item.properties = new LocationInfo(item.properties)));
@@ -181,8 +183,9 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
     const dy = bounds[1][1] - bounds[0][1];
     const x = (bounds[0][0] + bounds[1][0]) / 2;
     const y = (bounds[0][1] + bounds[1][1]) / 2;
-    const scale = Math.max(1, Math.min(25, 0.9 / Math.max(dx / this._width, dy / this._height)));
-    const translate = [this._width / 2 - scale * x, this._height / 2 - scale * y];
+    const exclude_HeaderHeight = this._height - this._headerHeight;
+    const scale = Math.max(1, Math.min(25, 0.9 / Math.max(dx / this._width, dy / exclude_HeaderHeight)));
+    const translate = [this._width / 2 - scale * x, exclude_HeaderHeight / 2 - scale * y + this._headerHeight];
 
     this.currentZoom = scale;
 
@@ -224,7 +227,6 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
             .text(info),
         (update) =>
           update
-            // .attr('opacity', info ? '1' : '0')
             .attr('font-size', `${fontSize}px`)
             .attr('x', String(x))
             .attr('y', String(y + fontSize / 2))

@@ -7,7 +7,7 @@ import { TaiwanMapComponent } from './components/taiwan-map/taiwan-map.component
   standalone: true,
   imports: [RouterOutlet, TaiwanMapComponent],
   template: `
-    <h1 class="sticky top-0 bg-gray-50/[0.25] p-5 text-4xl shadow-lg">{{ title }}</h1>
+    <h1 class="pointer-events-none fixed top-0 z-50 w-full bg-gray-50/[0.25] p-5 text-4xl shadow-lg">{{ title }}</h1>
     <app-taiwan-map class="h-full grow" />
 
     <router-outlet />
