@@ -19,7 +19,7 @@ type GeoFeature = Feature<Geometry, LocationInfo>;
   template: `
     <svg #mapSvg></svg>
     <button
-      *ngIf="currentZoom !== 1"
+      *ngIf="isZoomToCountry"
       class="absolute right-0 top-[80px] m-3 rounded px-4 py-2 shadow hover:shadow-lg"
       (click)="zoomToAllCounty()">
       Back
@@ -43,8 +43,10 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
   private _g!: d3.Selection<SVGGElement, unknown, null, undefined>;
   private _projection!: d3.GeoProjection;
   private _path!: d3.GeoPath<any, d3.GeoPermissibleObjects>;
-  protected currentZoom = 1;
+  private _currentZoom = 1;
   private _townshipFeatures: GeoFeature[] = [];
+
+  protected isZoomToCountry = false;
 
   private readonly _destroy = new Subject<null>();
 
@@ -178,6 +180,7 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
   }
 
   private _zoomToCounty(county: GeoFeature): void {
+    this.isZoomToCountry = true;
     const bounds = this._path.bounds(county);
     const dx = bounds[1][0] - bounds[0][0];
     const dy = bounds[1][1] - bounds[0][1];
@@ -187,7 +190,7 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
     const scale = Math.max(1, Math.min(25, 0.9 / Math.max(dx / this._width, dy / exclude_HeaderHeight)));
     const translate = [this._width / 2 - scale * x, exclude_HeaderHeight / 2 - scale * y + this._headerHeight];
 
-    this.currentZoom = scale;
+    this._currentZoom = scale;
 
     this._g.selectAll<SVGPathElement, GeoFeature>(`.${D3ClassName.COUNTY}`).style('pointer-events', 'none');
     this._g.transition().duration(750).attr('transform', `translate(${translate[0]},${translate[1]}) scale(${scale})`);
@@ -195,7 +198,8 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
   }
 
   protected zoomToAllCounty(): void {
-    this.currentZoom = 1;
+    this.isZoomToCountry = false;
+    this._currentZoom = 1;
     this._g
       .transition()
       .duration(750)
@@ -209,7 +213,7 @@ export class TaiwanMapComponent implements OnInit, OnDestroy {
 
   private _toggleInfo(d: GeoFeature, info: string): void {
     const centroid = this._path.centroid(d);
-    const fontSize = 12 / this.currentZoom;
+    const fontSize = 12 / this._currentZoom;
     const [x, y] = centroid;
     this._g
       .selectAll<SVGPathElement, GeoFeature>(`.${D3ClassName.INFO_TEXT}`)
