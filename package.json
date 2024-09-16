@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "ng build",
+    "deploy": "ng deploy --base-href=https://feeng10914017.github.io/d3-taiwan-map/ --repo=https://github.com/feeng10914017/d3-taiwan-map.git",
     "ng": "ng",
     "serve:ssr:D3TaiwanMap": "node dist/d3-taiwan-map/server/server.mjs",
     "start": "ng serve",
